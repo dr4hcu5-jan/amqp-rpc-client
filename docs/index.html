@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to GENESIS Database RESTful API Wrapper’s documentation! &mdash; GENESIS Database RESTful API Wrapper  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="#" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex/" />
+    <link rel="search" title="Search" href="search/" />
+    <link rel="next" title="amqp_rpc_client" href="modules/" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> GENESIS Database RESTful API Wrapper
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/">amqp_rpc_client</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">GENESIS Database RESTful API Wrapper</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>Welcome to GENESIS Database RESTful API Wrapper’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-genesis-database-restful-api-wrapper-s-documentation">
+<h1>Welcome to GENESIS Database RESTful API Wrapper’s documentation!<a class="headerlink" href="#welcome-to-genesis-database-restful-api-wrapper-s-documentation" title="Permalink to this headline"></a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<section id="amqp-rpc-client">
+<h2>AMQP RPC Client<a class="headerlink" href="#amqp-rpc-client" title="Permalink to this headline"></a></h2>
+<p><a class="reference external" href="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/code-analysis.yaml/badge.svg"><img alt="CodeQL" src="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/code-analysis.yaml/badge.svg" /></a>
+<a class="reference external" href="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/ossar.yaml"><img alt="OSSAR" src="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/ossar.yaml/badge.svg" /></a>
+<a class="reference external" href="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/pylint.yaml"><img alt="Pylint" src="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/pylint.yaml/badge.svg?branch=main" /></a></p>
+<p>This library offers a Remote-Procedure-Call client which communicates its messages via a message
+broker which uses the AMQPv0-9-1 protocol.</p>
+<p>This library is currently only tested with RabbitMQ since the underlying package <code class="docutils literal notranslate"><span class="pre">pika</span></code> is only
+tested with the RabbitMQ server</p>
+<section id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h3>
+<section id="general">
+<h4>General<a class="headerlink" href="#general" title="Permalink to this headline"></a></h4>
+<p>This AMQP RPC Client uses an extra thread in which it handles data events like new messages or
+sending keep-alive messages. Therefore, your code will continue to execute after sending a message
+without waiting for a response. See the attached examples for how to use the library</p>
+</section>
+<section id="examples">
+<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h4>
+<details><summary>Create a new client</summary>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># The Data Source Name which is used to connect to the message broker. The virtual host currently</span>
+<span class="c1"># is &quot;/&quot;. Special characters need to be url-encoded</span>
+<span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s1">&#39;amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;your-message-broker-address&gt;&gt;/</span><span class="si">%2F</span><span class="s1">&#39;</span>
+
+<span class="c1"># Create the new client with the data source name</span>
+<span class="n">rpc_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">AMQP_DSN</span><span class="p">)</span>
+
+</pre></div>
+</div>
+</details>
+<details><summary>Send a message to another exchange</summary>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># The Data Source Name which is used to connect to the message broker. The virtual host currently</span>
+<span class="c1"># is &quot;/&quot;. Special characters need to be url-encoded</span>
+<span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s1">&#39;amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;your-message-broker-address&gt;&gt;/</span><span class="si">%2F</span><span class="s1">&#39;</span>
+
+<span class="c1"># The exchange into which the message shall be posted</span>
+<span class="n">TARGET_EXCHANGE</span> <span class="o">=</span> <span class="s1">&#39;hello_world&#39;</span>
+
+<span class="c1"># Create the new client with the data source name</span>
+<span class="n">rpc_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">AMQP_DSN</span><span class="p">)</span>
+
+<span class="c1"># Send a message to the specified exchange</span>
+<span class="n">rpc_client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;my_message_content_string&#39;</span><span class="p">,</span> <span class="n">TARGET_EXCHANGE</span><span class="p">)</span>
+</pre></div>
+</div>
+</details>
+<details><summary>Send a message to another exchange and wait for the answer</summary>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># The Data Source Name which is used to connect to the message broker. The virtual host currently</span>
+<span class="c1"># is &quot;/&quot;. Special characters need to be url-encoded</span>
+<span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s1">&#39;amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;your-message-broker-address&gt;&gt;/</span><span class="si">%2F</span><span class="s1">&#39;</span>
+
+<span class="c1"># The exchange into which the message shall be posted</span>
+<span class="n">TARGET_EXCHANGE</span> <span class="o">=</span> <span class="s1">&#39;hello_world&#39;</span>
+
+<span class="c1"># Create the new client with the data source name</span>
+<span class="n">rpc_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">AMQP_DSN</span><span class="p">)</span>
+
+<span class="c1"># Send a message to the specified exchange. This will return a message id which can be used to wait</span>
+<span class="c1"># for a response</span>
+<span class="n">message_id</span> <span class="o">=</span> <span class="n">rpc_client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;my_message_content_string&#39;</span><span class="p">,</span> <span class="n">TARGET_EXCHANGE</span><span class="p">)</span>
+
+<span class="c1"># Wait indefinitely and receive the response bytes</span>
+<span class="n">response</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">rpc_client</span><span class="o">.</span><span class="n">await_response</span><span class="p">(</span><span class="n">message_id</span><span class="p">)</span>
+</pre></div>
+</div>
+</details>
+<details><summary>Send a message to another exchange and wait for the answer with an timeout</summary>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># The Data Source Name which is used to connect to the message broker. The virtual host currently</span>
+<span class="c1"># is &quot;/&quot;. Special characters need to be url-encoded</span>
+<span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s1">&#39;amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;your-message-broker-address&gt;&gt;/</span><span class="si">%2F</span><span class="s1">&#39;</span>
+
+<span class="c1"># The exchange into which the message shall be posted</span>
+<span class="n">TARGET_EXCHANGE</span> <span class="o">=</span> <span class="s1">&#39;hello_world&#39;</span>
+
+<span class="c1"># The timeout in seconds as to how long the answer shall be awaited</span>
+<span class="n">ANSWER_TIMEOUT</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>
+
+<span class="c1"># Create the new client with the data source name</span>
+<span class="n">rpc_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">AMQP_DSN</span><span class="p">)</span>
+
+<span class="c1"># Send a message to the specified exchange. This will return a message id which can be used to wait</span>
+<span class="c1"># for a response</span>
+<span class="n">message_id</span> <span class="o">=</span> <span class="n">rpc_client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;my_message_content_string&#39;</span><span class="p">,</span> <span class="n">TARGET_EXCHANGE</span><span class="p">)</span>
+
+<span class="c1"># Wait indefinitely and receive the response bytes</span>
+<span class="n">response</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">rpc_client</span><span class="o">.</span><span class="n">await_response</span><span class="p">(</span><span class="n">message_id</span><span class="p">,</span> <span class="n">ANSWER_TIMEOUT</span><span class="p">)</span>
+
+<span class="c1"># Check if a response was received</span>
+<span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No response received&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</pre></div>
+</div>
+</details>
+<details><summary>Directly get the response content if it is available</summary>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="c1"># The Data Source Name which is used to connect to the message broker. The virtual host currently</span>
+<span class="c1"># is &quot;/&quot;. Special characters need to be url-encoded</span>
+<span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s1">&#39;amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;your-message-broker-address&gt;&gt;/</span><span class="si">%2F</span><span class="s1">&#39;</span>
+
+<span class="c1"># The exchange into which the message shall be posted</span>
+<span class="n">TARGET_EXCHANGE</span> <span class="o">=</span> <span class="s1">&#39;hello_world&#39;</span>
+
+<span class="c1"># The timeout in seconds as to how long the answer shall be awaited</span>
+<span class="n">ANSWER_TIMEOUT</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>
+
+<span class="c1"># Create the new client with the data source name</span>
+<span class="n">rpc_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">AMQP_DSN</span><span class="p">)</span>
+
+<span class="c1"># Send a message to the specified exchange. This will return a message id which can be used to wait</span>
+<span class="c1"># for a response</span>
+<span class="n">message_id</span> <span class="o">=</span> <span class="n">rpc_client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;my_message_content_string&#39;</span><span class="p">,</span> <span class="n">TARGET_EXCHANGE</span><span class="p">)</span>
+
+<span class="c1"># Try to get the response</span>
+<span class="n">response</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">rpc_client</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">message_id</span><span class="p">)</span>
+
+<span class="c1"># Check if a response was received</span>
+<span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No response received&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</pre></div>
+</div>
+</details></section>
+</section>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex/"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex/"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search/"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules/" class="btn btn-neutral float-right" title="amqp_rpc_client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Jan Eike Suchard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
