@@ -1,6 +1,3 @@
-Welcome to GENESIS Database RESTful API Wrapper's documentation!
-================================================================
-
 .. toctree::
    :maxdepth: 2
    :hidden:

@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../src/'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'GENESIS Database RESTful API Wrapper'
+project = 'AMQP RPC Client'
 copyright = '2022, Jan Eike Suchard'
 author = 'Jan Eike Suchard'
 

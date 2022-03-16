@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to GENESIS Database RESTful API Wrapper’s documentation! &mdash; GENESIS Database RESTful API Wrapper  documentation</title>
+  <title>AMQP RPC Client &mdash; AMQP RPC Client  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -26,7 +26,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="#" class="icon icon-home"> GENESIS Database RESTful API Wrapper
+            <a href="#" class="icon icon-home"> AMQP RPC Client
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search/" method="get">
@@ -47,7 +47,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">GENESIS Database RESTful API Wrapper</a>
+          <a href="#">AMQP RPC Client</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -55,7 +55,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>Welcome to GENESIS Database RESTful API Wrapper’s documentation!</li>
+      <li>AMQP RPC Client</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -65,12 +65,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="welcome-to-genesis-database-restful-api-wrapper-s-documentation">
-<h1>Welcome to GENESIS Database RESTful API Wrapper’s documentation!<a class="headerlink" href="#welcome-to-genesis-database-restful-api-wrapper-s-documentation" title="Permalink to this headline"></a></h1>
-<div class="toctree-wrapper compound">
+  <div class="toctree-wrapper compound">
 </div>
 <section id="amqp-rpc-client">
-<h2>AMQP RPC Client<a class="headerlink" href="#amqp-rpc-client" title="Permalink to this headline"></a></h2>
+<h1>AMQP RPC Client<a class="headerlink" href="#amqp-rpc-client" title="Permalink to this headline"></a></h1>
 <p><a class="reference external" href="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/code-analysis.yaml/badge.svg"><img alt="CodeQL" src="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/code-analysis.yaml/badge.svg" /></a>
 <a class="reference external" href="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/ossar.yaml"><img alt="OSSAR" src="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/ossar.yaml/badge.svg" /></a>
 <a class="reference external" href="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/pylint.yaml"><img alt="Pylint" src="https://github.com/j-suchard/amqp-rpc-client/actions/workflows/pylint.yaml/badge.svg?branch=main" /></a></p>
@@ -79,15 +77,15 @@ broker which uses the AMQPv0-9-1 protocol.</p>
 <p>This library is currently only tested with RabbitMQ since the underlying package <code class="docutils literal notranslate"><span class="pre">pika</span></code> is only
 tested with the RabbitMQ server</p>
 <section id="usage">
-<h3>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h3>
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h2>
 <section id="general">
-<h4>General<a class="headerlink" href="#general" title="Permalink to this headline"></a></h4>
+<h3>General<a class="headerlink" href="#general" title="Permalink to this headline"></a></h3>
 <p>This AMQP RPC Client uses an extra thread in which it handles data events like new messages or
 sending keep-alive messages. Therefore, your code will continue to execute after sending a message
 without waiting for a response. See the attached examples for how to use the library</p>
 </section>
 <section id="examples">
-<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h4>
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h3>
 <details><summary>Create a new client</summary>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
 
@@ -203,7 +201,6 @@ without waiting for a response. See the attached examples for how to use the lib
 </pre></div>
 </div>
 </details></section>
-</section>
 </section>
 </section>
 <section id="indices-and-tables">
