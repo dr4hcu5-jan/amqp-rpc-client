@@ -26,7 +26,7 @@ class Client:
             self,
             amqp_dsn: str,
             client_name: typing.Optional[str] = secrets.token_urlsafe(nbytes=16),
-            additional_properties: typing.Optional[typing.Dict[str, str]] = {}
+            additional_properties: typing.Optional[typing.Dict[str, str]] = None
     ):
         """Initialize a new RPC Client and open the connection to the message broker
         
@@ -38,6 +38,8 @@ class Client:
         :param additional_properties: Optional additional client properties which may be set
         """
         # Get a logger for this client
+        if additional_properties is None:
+            additional_properties = {}
         self._logger = logging.getLogger('amqp_rpc_client')
         # = Check if the Data Source Name is a valid data source name =
         self._logger.debug('Validating the following parameter: "amqp_dsn"')
