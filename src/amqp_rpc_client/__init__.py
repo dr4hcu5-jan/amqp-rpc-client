@@ -86,6 +86,8 @@ class Client:
         self._logger.info('Connected to the message broker')
         # Create an event for stopping the broker
         self._stop_event = threading.Event()
+        # Create an event for allowing messages to be sent after creating the connection
+        self._allow_messages = threading.Event()
         # Create a thread which will handle the data events sent by the broker
         self._logger.debug('Setting up the data handling')
         self._data_event_handler = threading.Thread(
@@ -113,6 +115,7 @@ class Client:
             # Acquire the internal lock and process possible new data events on the connection
             with self.__messaging_lock:
                 self._connection.process_data_events()
+                self._allow_messages.set()
                 # Sleep for 0.1 seconds before rechecking the stop flag
                 time.sleep(0.1)
         
@@ -185,19 +188,21 @@ class Client:
         self._logger.debug('Created a new event for this message')
         # = Send the message to the message broker =
         # Acquire the messaging lock to allow this message to be send
-        with self.__messaging_lock:
-            self._logger.debug('Acquired the messaging lock for sending a message')
-            self._channel.basic_publish(
-                exchange=exchange,
-                routing_key='',
-                body=content.encode('utf-8'),
-                properties=pika.BasicProperties(
-                    reply_to=self._response_queue_name,
-                    correlation_id=message_id,
-                    content_encoding='utf-8'
+        if self._allow_messages.wait():
+
+            with self.__messaging_lock:
+                self._logger.debug('Acquired the messaging lock for sending a message')
+                self._channel.basic_publish(
+                    exchange=exchange,
+                    routing_key='',
+                    body=content.encode('utf-8'),
+                    properties=pika.BasicProperties(
+                        reply_to=self._response_queue_name,
+                        correlation_id=message_id,
+                        content_encoding='utf-8'
+                    )
                 )
-            )
-            self._logger.debug('Published a new message in the specified exchange')
+                self._logger.debug('Published a new message in the specified exchange')
         return message_id
     
     def get_response(self, message_id: str) -> typing.Optional[bytes]:
