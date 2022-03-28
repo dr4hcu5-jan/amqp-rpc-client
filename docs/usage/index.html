@@ -2,10 +2,11 @@
 <html class="no-js">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex/" /><link rel="search" title="Search" href="../search/" />
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex/" /><link rel="search" title="Search" href="../search/" /><link rel="next" title="src" href="../modules/" /><link rel="prev" title="Installation" href="../installation/" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/><title>Python Module Index - Advanced Message Queuing Protocol RPC Client 1.1.0 documentation</title>
-<link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <meta name="generator" content="sphinx-4.5.0, furo 2022.03.04"/>
+        <title>Usage - Advanced Message Queuing Protocol RPC Client 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=935aa2abcc5c1da4283d1dc201fb1f0add16d23a" />
     <link rel="stylesheet" type="text/css" href="../_static/css/sphinx-toolbox.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
@@ -133,7 +134,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -154,10 +155,10 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../usage/">Usage</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modules/">amqp_rpc_client</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Usage</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modules/">src</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../amqp_rpc_client/">amqp_rpc_client package</a></li>
 </ul>
 </li>
@@ -187,39 +188,95 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          
-<section class="domainindex-section">
-  <h1>Python Module Index</h1>
-  <div class="domainindex-jumpbox"><a href="#cap-a"><strong>a</strong></a></div>
-</section>
-<table class="domainindex-table">
-  <tr class="pcap">
-    <td></td><td>&#160;</td><td></td>
-  </tr>
-  <tr class="cap" id="cap-a">
-    <td></td><td><strong>a</strong></td><td></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>
-        <a href="../amqp_rpc_client/#module-amqp_rpc_client"><code class="xref">amqp_rpc_client</code></a></td><td>
-    <em></em></td>
-  </tr>
-</table>
+          <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">#</a></h1>
+<p>This chapter will contain information about how to use the server and
+what things are necessary to be able to use it.</p>
+<div class="section" id="amqp-connection-properties">
+<h2>AMQP Connection Properties<a class="headerlink" href="#amqp-connection-properties" title="Permalink to this headline">#</a></h2>
+<p>For successfully starting a server you need to create a Data Source Name pointing to the message
+broker. The data source name should contain credentials for connecting to the message broker. If
+you do not supply credentials with the data source name the underlying <code class="xref py py-mod docutils literal notranslate"><span class="pre">pika</span></code> package will use
+<code class="docutils literal notranslate"><span class="pre">guest</span></code> as username and password.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s1">'amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;message-broker-host&gt;&gt;:&lt;&lt;port&gt;&gt;/</span><span class="si">%2F</span><span class="s1">'</span>
+<span class="sd">"""A schema for a valid AMQP Data Source Name"""</span>
+
+<span class="n">AMQP_EXCHANGE_NAME</span> <span class="o">=</span> <span class="s1">'&lt;&lt;your-exchange-name&gt;&gt;'</span>
+<span class="sd">"""The your exchange name into which the messages will be published"""</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="full-example">
+<h2>Full example<a class="headerlink" href="#full-example" title="Permalink to this headline">#</a></h2>
+<p>This example will demonstrate how a complete code artifact will look, if you create a new server</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">amqp_rpc_client</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">AMQP_DSN</span> <span class="o">=</span> <span class="s2">"amqp://&lt;&lt;your-username&gt;&gt;:&lt;&lt;your-password&gt;&gt;@&lt;&lt;message-broker-host&gt;&gt;:&lt;&lt;port&gt;&gt;/</span><span class="si">%2F</span><span class="s2">"</span>
+<span class="sd">"""The Data Source Name pointing to the message broker which should contain credentials"""</span>
+
+<span class="n">EXCHANGE_NAME</span> <span class="o">=</span> <span class="s2">"example-exchange"</span>
+<span class="s2">"""The name of the exchange into which the rpc client publishes its messages""</span>
+
+
+<span class="s2"># Protect the script part of the application from being executed during imports</span>
+<span class="s2">if __name__ == "__main__":</span>
+
+<span class="s2">    logging.basicConfig(</span>
+<span class="s2">        level=logging.DEBUG,</span>
+<span class="s2">        format='</span><span class="si">%(levelname)s</span><span class="s2"> - </span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(name)s</span><span class="s2"> - </span><span class="si">%(funcName)s</span><span class="s2"> - </span><span class="si">%(lineno)s</span><span class="s2"> : </span><span class="si">%(message)s</span><span class="s2">'</span>
+<span class="s2">    )</span>
+
+<span class="s2">    # Create a new rpc client</span>
+<span class="s2">    rpc_client = Client(</span>
+<span class="s2">        AMQP_DSN</span>
+<span class="s2">    )</span>
+
+<span class="s2">    while True:</span>
+<span class="s2">        try:</span>
+<span class="s2">            time.sleep(0.5)</span>
+<span class="s2">            rpc_client.send('hello', EXCHANGE_NAME)</span>
+<span class="s2">        except KeyboardInterrupt:</span>
+<span class="s2">            # Stop the server if CTRL-C as sent to the python interpreter</span>
+<span class="s2">            break</span>
+</pre></div>
+</div>
+</div>
+</div>
 
         </article>
       </div>
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="../modules/">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">src</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../installation/">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Installation</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -245,8 +302,28 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Usage</a><ul>
+<li><a class="reference internal" href="#amqp-connection-properties">AMQP Connection Properties</a></li>
+<li><a class="reference internal" href="#full-example">Full example</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
@@ -259,6 +336,5 @@
     <script src="../_static/clipboard.min.js"></script>
     <script src="../_static/copybutton.js"></script>
     <script src="../_static/tabs.js"></script>
-    
-    <script>DOCUMENTATION_OPTIONS.COLLAPSE_INDEX = true</script></body>
+    </body>
 </html>
