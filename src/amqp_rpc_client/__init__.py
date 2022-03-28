@@ -121,10 +121,15 @@ class Client:
         while not self._stop_event.is_set():
             # Acquire the internal lock and process possible new data events on the connection
             with self.__messaging_lock:
-                self._connection.process_data_events()
-                self._allow_messages.set()
-                # Sleep for 0.1 seconds before rechecking the stop flag
-                time.sleep(0.1)
+                if self._connection.is_open:
+                    self._connection.process_data_events()
+                    self._allow_messages.set()
+                    # Sleep for 0.005 seconds before rechecking the stop flag
+                    time.sleep(0.005)
+                else:
+                    self._logger.error('The connection to the message broker is closed. Stopping '
+                                       'client')
+                    self._stop_event.set()
         
         # Since the stop flag was set we will now cancel the consuming process
         self._logger.info('The stopping event was enabled. Cancelling the message consumer')
@@ -215,6 +220,7 @@ class Client:
         """Get a response from the response list
         
         This method will try to get the response content from the dictionary of responses.
+        If the response is found it will be removed from the response dictionary
         
         :param message_id: The id of the message which was created during the sending
         :return: The message body if it already has a response else None
@@ -222,10 +228,10 @@ class Client:
         # Check if the response is already available
         self._logger.debug('%s - Checking if the response was already received',
                            message_id)
-        response = self.__responses.get(message_id, None)
+        response = self.__responses.pop(message_id, None)
         if response is None:
-            self._logger.warning('%s - The response for the message has not been received yet',
-                                 message_id)
+            self._logger.debug('%s - The response for the message has not been received yet',
+                               message_id)
         return response
     
     def await_response(
@@ -234,6 +240,8 @@ class Client:
             timeout: float = None
     ) -> typing.Optional[bytes]:
         """Wait for the response to be handled and return it
+        
+        This will remove the response from the list of responses
         
         :param message_id: The id of the message which was created during the sending process
         :param timeout: Time to wait for the event to be set
@@ -252,6 +260,7 @@ class Client:
                                  'response was received',
                                  message_id, timeout)
             return None
-        self._logger.info('%s - Found Response for the message',
-                          message_id)
-        return self.__responses.get(message_id)
+        self._logger.debug('%s - Found Response for the message',
+                           message_id)
+        response = self.__responses.pop(message_id, None)
+        return response
