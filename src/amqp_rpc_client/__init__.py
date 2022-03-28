@@ -252,5 +252,6 @@ class Client:
                                  'response was received',
                                  message_id, timeout)
             return None
-        self._logger.info('%s - Found Response for the message')
+        self._logger.info('%s - Found Response for the message',
+                          message_id)
         return self.__responses.get(message_id)
