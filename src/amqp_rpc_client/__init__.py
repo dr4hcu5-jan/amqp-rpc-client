@@ -26,16 +26,20 @@ class Client:
             self,
             amqp_dsn: str,
             client_name: typing.Optional[str] = secrets.token_urlsafe(nbytes=16),
-            additional_properties: typing.Optional[typing.Dict[str, str]] = None
+            additional_properties: typing.Optional[typing.Dict[str, str]] = None,
+            mute_pika: typing.Optional[bool] = False
     ):
         """Initialize a new RPC Client and open the connection to the message broker
         
         :param amqp_dsn: The Data Source Name pointing to the message broker installation. This
             Data Source Name should contain credentials, if not the standardized credentials (User:
             `guest`, Password: `guest`) will be used for authentication
+        :type amqp_dsn: str
         :param client_name: Optional name of the client which will be visible in the management
             platform of the message broker, if the platform supports this
+        :type client_name: str, optional
         :param additional_properties: Optional additional client properties which may be set
+        :type additional_properties: dict[str, str], optional
         """
         # Get a logger for this client
         if additional_properties is None:
@@ -53,6 +57,9 @@ class Client:
             raise ValueError('The amqp_dsn may not be an empty string')
         # = Check finished =
         self._logger.debug('All checks for parameter "amqp_dsn" passed')
+        if mute_pika:
+            self._logger.warning('Muting the underlying pika library completely')
+            logging.getLogger("pika").setLevel('CRITICAL')
         # Parse the amqp_dsn into preliminary parameters
         _connection_parameters = pika.URLParameters(amqp_dsn)
         # Create a new connection name which is added to the client properties later on
@@ -187,9 +194,8 @@ class Client:
         )
         self._logger.debug('Created a new event for this message')
         # = Send the message to the message broker =
-        # Acquire the messaging lock to allow this message to be send
+        # Acquire the messaging lock to allow this message to be sent
         if self._allow_messages.wait():
-
             with self.__messaging_lock:
                 self._logger.debug('Acquired the messaging lock for sending a message')
                 self._channel.basic_publish(
@@ -214,10 +220,11 @@ class Client:
         :return: The message body if it already has a response else None
         """
         # Check if the response is already available
-        self._logger.debug('Checking if the response was already handled')
+        self._logger.debug('%s - Checking if the response was already received',
+                           message_id)
         response = self.__responses.get(message_id, None)
         if response is None:
-            self._logger.warning('The response for the message %s has not been handled yet',
+            self._logger.warning('%s - The response for the message has not been received yet',
                                  message_id)
         return response
     
@@ -234,14 +241,16 @@ class Client:
         """
         # Check if the message id is in the event dictionary
         if message_id not in self.__events:
-            raise ValueError('A message with this ID has not been sent')
-        self._logger.info('Waiting for the response to be handled. This will block the current '
-                          'thread')
+            raise ValueError('%s - A message with this ID has not been sent',
+                             message_id)
+        self._logger.info('%s - Waiting for the response to the message',
+                          message_id)
         # Try to get the event
         message_returned = self.__events.get(message_id)
         if not message_returned.wait(timeout=timeout):
-            self._logger.warning('The waiting operation timed out and no response was received')
+            self._logger.warning('%s - The waiting operation timed out after %s seconds and no '
+                                 'response was received',
+                                 message_id, timeout)
             return None
-        self._logger.info('A response for the message was received')
+        self._logger.info('%s - Found Response for the message')
         return self.__responses.get(message_id)
-    
