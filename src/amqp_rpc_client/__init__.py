@@ -203,16 +203,33 @@ class Client:
         if self._allow_messages.wait():
             with self.__messaging_lock:
                 self._logger.debug("Acquired the messaging lock for sending a message")
-                self._channel.basic_publish(
-                    exchange=exchange,
-                    routing_key="",
-                    body=content.encode("utf-8"),
-                    properties=pika.BasicProperties(
-                        reply_to=self._response_queue_name,
-                        correlation_id=message_id,
-                        content_encoding="utf-8",
-                    ),
-                )
+                try:
+                    self._channel.basic_publish(
+                        exchange=exchange,
+                        routing_key="",
+                        body=content.encode("utf-8"),
+                        properties=pika.BasicProperties(
+                            reply_to=self._response_queue_name,
+                            correlation_id=message_id,
+                            content_encoding="utf-8",
+                        ),
+                    )
+                except pika.exceptions.ChannelWrongStateError:
+                    self._logger.warning(
+                        "The channel used for sending the message is in the "
+                        "wrong state for sending messages. Opening a new channel"
+                    )
+                    self._channel = self._connection.channel()
+                    self._channel.basic_publish(
+                        exchange=exchange,
+                        routing_key="",
+                        body=content.encode("utf-8"),
+                        properties=pika.BasicProperties(
+                            reply_to=self._response_queue_name,
+                            correlation_id=message_id,
+                            content_encoding="utf-8",
+                        ),
+                    )
                 self._logger.debug("Published a new message in the specified exchange")
         return message_id
 
