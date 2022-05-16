@@ -126,12 +126,14 @@ class Client:
             # Acquire the internal lock and process possible new data events on the connection
             with self.__messaging_lock:
                 if self._connection.is_open:
+                    self._logger.debug("Processing data events now")
                     self._connection.process_data_events()
-                    # Sleep for 0.01 seconds before rechecking the stop flag
-                    time.sleep(self._data_event_wait_time)
+
                 else:
                     self._logger.error("The connection to the message broker is closed. Stopping the AMQP client")
                     self._stop_event.set()
+            # Sleep for 0.01 seconds before rechecking the stop flag
+            time.sleep(self._data_event_wait_time)
 
         # Since the stop flag was set we will now cancel the consuming process
         self._logger.info("The stopping event was enabled. Cancelling the message consumer")
@@ -234,7 +236,7 @@ class Client:
                     ),
                 )
             self._logger.debug("Published a new message in the specified exchange")
-        self._logger.debug("Released messaging lock")
+        self._logger.debug("Released the messaging lock")
         return message_id
 
     def get_response(self, message_id: str) -> typing.Optional[bytes]:
