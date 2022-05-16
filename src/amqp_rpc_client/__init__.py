@@ -28,6 +28,7 @@ class Client:
         client_name: typing.Optional[str] = secrets.token_urlsafe(nbytes=16),
         additional_properties: typing.Optional[typing.Dict[str, str]] = None,
         mute_pika: typing.Optional[bool] = False,
+        data_processing_wait_time: typing.Union[float, None] = 0.01,
     ):
         """Initialize a new RPC Client and open the connection to the message broker
 
@@ -58,7 +59,7 @@ class Client:
         # = Check finished =
         self._logger.debug('All checks for parameter "amqp_dsn" passed')
         if mute_pika:
-            self._logger.warning("Muting the underlying pika library completely")
+            self._logger.debug("Muting the underlying pika library completely")
             logging.getLogger("pika").setLevel("CRITICAL")
         # Parse the amqp_dsn into preliminary parameters
         _connection_parameters = pika.URLParameters(amqp_dsn)
@@ -97,10 +98,13 @@ class Client:
         self._allow_messages = threading.Event()
         # Create a thread which will handle the data events sent by the broker
         self._logger.debug("Setting up the data handling")
+        self._data_event_wait_time = data_processing_wait_time
         self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
         # Start the thread
-        self._logger.debug("Starting the data handling")
+        self._logger.debug("Starting the data handling thread")
         self._data_event_handler.start()
+        self._allow_messages.wait()
+        self._logger.info("Startup process finished. The client may now be used to send messages")
 
     def _handle_data_events(self):
         """Handle new data events and cancel the communication with the message broker if the
@@ -113,20 +117,20 @@ class Client:
             auto_ack=False,
             exclusive=True,
         )
-
+        # Process some data events from the start on and allow messages to be sent
+        if self._connection.is_open:
+            self._connection.process_data_events()
+            self._allow_messages.set()
         # Start polling for new messages indefinitely
         while not self._stop_event.is_set():
             # Acquire the internal lock and process possible new data events on the connection
             with self.__messaging_lock:
                 if self._connection.is_open:
                     self._connection.process_data_events()
-                    self._allow_messages.set()
-                    # Sleep for 0.005 seconds before rechecking the stop flag
-                    time.sleep(0.005)
+                    # Sleep for 0.01 seconds before rechecking the stop flag
+                    time.sleep(self._data_event_wait_time)
                 else:
-                    self._logger.error(
-                        "The connection to the message broker is closed. Stopping " "client"
-                    )
+                    self._logger.error("The connection to the message broker is closed. Stopping the AMQP client")
                     self._stop_event.set()
 
         # Since the stop flag was set we will now cancel the consuming process
@@ -174,8 +178,7 @@ class Client:
             self._logger.debug("Setting the event correlating to the message to received")
             if self.__events.get(properties.correlation_id) is None:
                 self._logger.critical(
-                    "Error in the messaging events. Unable to find event "
-                    "associated with this correlation id"
+                    "Error in the messaging events. Unable to find event associated with this correlation id"
                 )
                 raise IndexError("Unable to find Event with the correlation id")
             else:
@@ -200,37 +203,38 @@ class Client:
         self._logger.debug("Created a new event for this message")
         # = Send the message to the message broker =
         # Acquire the messaging lock to allow this message to be sent
-        if self._allow_messages.wait():
-            with self.__messaging_lock:
-                self._logger.debug("Acquired the messaging lock for sending a message")
-                try:
-                    self._channel.basic_publish(
-                        exchange=exchange,
-                        routing_key="",
-                        body=content.encode("utf-8"),
-                        properties=pika.BasicProperties(
-                            reply_to=self._response_queue_name,
-                            correlation_id=message_id,
-                            content_encoding="utf-8",
-                        ),
-                    )
-                except pika.exceptions.ChannelWrongStateError:
-                    self._logger.warning(
-                        "The channel used for sending the message is in the "
-                        "wrong state for sending messages. Opening a new channel"
-                    )
-                    self._channel = self._connection.channel()
-                    self._channel.basic_publish(
-                        exchange=exchange,
-                        routing_key="",
-                        body=content.encode("utf-8"),
-                        properties=pika.BasicProperties(
-                            reply_to=self._response_queue_name,
-                            correlation_id=message_id,
-                            content_encoding="utf-8",
-                        ),
-                    )
-                self._logger.debug("Published a new message in the specified exchange")
+        with self.__messaging_lock:
+            self._logger.debug("Acquired the messaging lock for sending a message")
+            try:
+                self._channel.basic_publish(
+                    exchange=exchange,
+                    routing_key="",
+                    body=content.encode("utf-8"),
+                    properties=pika.BasicProperties(
+                        reply_to=self._response_queue_name,
+                        correlation_id=message_id,
+                        content_encoding="utf-8",
+                    ),
+                )
+            except pika.exceptions.ChannelWrongStateError as e:
+                self._logger.warning(
+                    "The channel used for sending the message is in the "
+                    "wrong state for sending messages. Opening a new channel",
+                    exc_info=e,
+                )
+                self._channel = self._connection.channel()
+                self._channel.basic_publish(
+                    exchange=exchange,
+                    routing_key="",
+                    body=content.encode("utf-8"),
+                    properties=pika.BasicProperties(
+                        reply_to=self._response_queue_name,
+                        correlation_id=message_id,
+                        content_encoding="utf-8",
+                    ),
+                )
+            self._logger.debug("Published a new message in the specified exchange")
+        self._logger.debug("Released messaging lock")
         return message_id
 
     def get_response(self, message_id: str) -> typing.Optional[bytes]:
@@ -246,9 +250,7 @@ class Client:
         self._logger.debug("%s - Checking if the response was already received", message_id)
         response = self.__responses.pop(message_id, None)
         if response is None:
-            self._logger.debug(
-                "%s - The response for the message has not been received yet", message_id
-            )
+            self._logger.debug("%s - The response for the message has not been received yet", message_id)
         return response
 
     def await_response(self, message_id: str, timeout: float = None) -> typing.Optional[bytes]:
@@ -268,8 +270,7 @@ class Client:
         message_returned = self.__events.get(message_id)
         if not message_returned.wait(timeout=timeout):
             self._logger.warning(
-                "%s - The waiting operation timed out after %s seconds and no "
-                "response was received",
+                "%s - The waiting operation timed out after %s seconds and no " "response was received",
                 message_id,
                 timeout,
             )
