@@ -124,15 +124,16 @@ class Client:
         # Start polling for new messages indefinitely
         while not self._stop_event.is_set():
             # Acquire the internal lock and process possible new data events on the connection
-            with self.__messaging_lock:
-                if self._connection.is_open:
-                    self._logger.debug("Processing data events now")
-                    self._connection.process_data_events()
-
-                else:
-                    self._logger.error("The connection to the message broker is closed. Stopping the AMQP client")
-                    self._stop_event.set()
+            self.__messaging_lock.acquire()
+            self._logger.debug("Acquired the messaging lock for processing data events")
+            if self._connection.is_open:
+                self._connection.process_data_events()
+            else:
+                self._logger.error("The connection to the message broker is closed. Stopping the AMQP client")
+                self._stop_event.set()
+            self.__messaging_lock.release()
             # Sleep for 0.01 seconds before rechecking the stop flag
+            self._logger.debug("Released the messaging lock from processing data events")
             time.sleep(self._data_event_wait_time)
 
         # Since the stop flag was set we will now cancel the consuming process
@@ -205,38 +206,39 @@ class Client:
         self._logger.debug("Created a new event for this message")
         # = Send the message to the message broker =
         # Acquire the messaging lock to allow this message to be sent
-        with self.__messaging_lock:
-            self._logger.debug("Acquired the messaging lock for sending a message")
-            try:
-                self._channel.basic_publish(
-                    exchange=exchange,
-                    routing_key="",
-                    body=content.encode("utf-8"),
-                    properties=pika.BasicProperties(
-                        reply_to=self._response_queue_name,
-                        correlation_id=message_id,
-                        content_encoding="utf-8",
-                    ),
-                )
-            except pika.exceptions.ChannelWrongStateError as e:
-                self._logger.warning(
-                    "The channel used for sending the message is in the "
-                    "wrong state for sending messages. Opening a new channel",
-                    exc_info=e,
-                )
-                self._channel = self._connection.channel()
-                self._channel.basic_publish(
-                    exchange=exchange,
-                    routing_key="",
-                    body=content.encode("utf-8"),
-                    properties=pika.BasicProperties(
-                        reply_to=self._response_queue_name,
-                        correlation_id=message_id,
-                        content_encoding="utf-8",
-                    ),
-                )
-            self._logger.debug("Published a new message in the specified exchange")
-        self._logger.debug("Released the messaging lock")
+        self.__messaging_lock.acquire()
+        self._logger.debug("Acquired the messaging lock for sending a message")
+        try:
+            self._channel.basic_publish(
+                exchange=exchange,
+                routing_key="",
+                body=content.encode("utf-8"),
+                properties=pika.BasicProperties(
+                    reply_to=self._response_queue_name,
+                    correlation_id=message_id,
+                    content_encoding="utf-8",
+                ),
+            )
+        except pika.exceptions.ChannelWrongStateError as e:
+            self._logger.warning(
+                "The channel used for sending the message is in the "
+                "wrong state for sending messages. Opening a new channel",
+                exc_info=e,
+            )
+            self._channel = self._connection.channel()
+            self._channel.basic_publish(
+                exchange=exchange,
+                routing_key="",
+                body=content.encode("utf-8"),
+                properties=pika.BasicProperties(
+                    reply_to=self._response_queue_name,
+                    correlation_id=message_id,
+                    content_encoding="utf-8",
+                ),
+            )
+        self._logger.debug("Published a new message in the specified exchange")
+        self.__messaging_lock.release()
+        self._logger.debug("Released messaging lock from sending a message")
         return message_id
 
     def get_response(self, message_id: str) -> typing.Optional[bytes]:
