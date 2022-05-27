@@ -218,6 +218,7 @@ class Client:
                     reply_to=self._response_queue_name,
                     correlation_id=message_id,
                     content_encoding="utf-8",
+                    delivery_mode=pika.delivery_mode.DeliveryMode.Persistent
                 ),
             )
         except pika.exceptions.ChannelWrongStateError as e:
