@@ -187,9 +187,10 @@ class Client:
             else:
                 self.__events.get(properties.correlation_id).set()
 
-    def send(self, content: str, exchange: str) -> str:
+    def send(self, content: str, exchange: str, routing_key: str = "") -> str:
         """Send a message to the exchange and get the created message id
 
+        :param routing_key: The routing key used to send the message to the right queue [optional for fanout queues]
         :param content: The content which shall be sent to the message broker
         :param exchange:  The exchange in which the message shall be published
         :return: The message id created to identify the request
@@ -211,7 +212,7 @@ class Client:
         try:
             self._channel.basic_publish(
                 exchange=exchange,
-                routing_key="",
+                routing_key=routing_key,
                 body=content.encode("utf-8"),
                 properties=pika.BasicProperties(
                     reply_to=self._response_queue_name,
