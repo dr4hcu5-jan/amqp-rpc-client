@@ -218,24 +218,33 @@ class Client:
                     reply_to=self._response_queue_name,
                     correlation_id=message_id,
                     content_encoding="utf-8",
-                    delivery_mode=pika.delivery_mode.DeliveryMode.Persistent
+                    delivery_mode=pika.delivery_mode.DeliveryMode.Persistent,
                 ),
             )
         except pika.exceptions.ChannelWrongStateError as e:
+            self._allow_messages.clear()
+            self._data_event_handler.join()
             self._logger.warning(
                 "The channel used for sending the message is in the "
                 "wrong state for sending messages. Opening a new channel",
                 exc_info=e,
             )
             self._channel = self._connection.channel()
+            self._logger.debug("Setting up the data handling")
+            self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+            # Start the thread
+            self._logger.debug("Starting the data handling thread")
+            self._data_event_handler.start()
+            self._allow_messages.wait()
             self._channel.basic_publish(
                 exchange=exchange,
-                routing_key="",
+                routing_key=routing_key,
                 body=content.encode("utf-8"),
                 properties=pika.BasicProperties(
                     reply_to=self._response_queue_name,
                     correlation_id=message_id,
                     content_encoding="utf-8",
+                    delivery_mode=pika.delivery_mode.DeliveryMode.Persistent,
                 ),
             )
         self._logger.debug("Published a new message in the specified exchange")
