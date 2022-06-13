@@ -225,13 +225,14 @@ class Client:
             self.__messaging_lock.release()
             self._allow_messages.clear()
             self._stop_event.set()
-            self._data_event_handler.join()
             self._logger.warning(
                 "The channel used for sending the message is in the "
                 "wrong state for sending messages. Opening a new channel",
                 exc_info=e,
             )
             self._channel = self._connection.channel()
+            self._queue = self._channel.queue_declare("", False, False, True, True)
+            self._response_queue_name = self._queue.method.queue
             self._data_event_handler.join()
             self._logger.debug("Setting up the data handling")
             self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
