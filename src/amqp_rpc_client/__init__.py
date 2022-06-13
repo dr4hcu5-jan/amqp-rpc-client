@@ -62,7 +62,7 @@ class Client:
             self._logger.debug("Muting the underlying pika library completely")
             logging.getLogger("pika").setLevel("CRITICAL")
         # Parse the amqp_dsn into preliminary parameters
-        _connection_parameters = pika.URLParameters(amqp_dsn)
+        self._connection_parameters = pika.URLParameters(amqp_dsn)
         # Create a new connection name which is added to the client properties later on
         self.connection_name = "amqp-rpc-client#" + secrets.token_hex(nbytes=8)
         self._logger.debug("Created connection name for new connection: %s", self.connection_name)
@@ -77,11 +77,11 @@ class Client:
         }
         self._logger.debug("Setting the following client properties: %s", _client_properties)
         # Set the client properties to the connection parameters
-        _connection_parameters.client_properties = _client_properties
+        self._connection_parameters.client_properties = _client_properties
         # Create a new blocking connection
         self._logger.info("Starting the connection to the message broker")
         self._logger.debug("Creating a new BlockingConnection")
-        self._connection = pika.BlockingConnection(_connection_parameters)
+        self._connection = pika.BlockingConnection(self._connection_parameters)
         # Open a new channel to the message broker
         self._logger.debug("Opening a new channel with the BlockingConnection")
         self._channel = self._connection.channel()
@@ -222,7 +222,9 @@ class Client:
                 ),
             )
         except pika.exceptions.ChannelWrongStateError as e:
+            self.__messaging_lock.release()
             self._allow_messages.clear()
+            self._stop_event.set()
             self._data_event_handler.join()
             self._logger.warning(
                 "The channel used for sending the message is in the "
@@ -230,12 +232,14 @@ class Client:
                 exc_info=e,
             )
             self._channel = self._connection.channel()
+            self._data_event_handler.join()
             self._logger.debug("Setting up the data handling")
             self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
             # Start the thread
             self._logger.debug("Starting the data handling thread")
             self._data_event_handler.start()
             self._allow_messages.wait()
+            self.__messaging_lock.acquire()
             self._channel.basic_publish(
                 exchange=exchange,
                 routing_key=routing_key,
@@ -247,8 +251,8 @@ class Client:
                     delivery_mode=pika.delivery_mode.DeliveryMode.Persistent,
                 ),
             )
-        self._logger.debug("Published a new message in the specified exchange")
         self.__messaging_lock.release()
+        self._logger.debug("Published a new message in the specified exchange")
         self._logger.debug("Released messaging lock from sending a message")
         return message_id
 
