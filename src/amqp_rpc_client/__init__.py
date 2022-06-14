@@ -232,17 +232,20 @@ class Client:
             self.__messaging_lock.release()
             # Stop the consumer thread which tries to consume the answers
             self._stop_event.set()
+            self.__messaging_lock.acquire()
             # Close the channel to the message broker
             if self._channel.is_open:
                 self._channel.close()
             elif not self._channel.is_open:
                 self._logger.debug("Skipping the channel closure since it already has been closed")
+            self._channel = None
             # Close the connection to the message broker
             if self._connection.is_open:
                 self._connection.close()
             elif not self._connection.is_open:
                 self._logger.debug("Skipping the connection closure since it already has been closed")
             # Start the reconnection flow
+            self._connection = None
             self._logger.info("Trying to reconnect to the message broker due to a lost connection")
             try:
                 self._connection = pika.BlockingConnection(self._connection_parameters)
@@ -252,20 +255,21 @@ class Client:
                 self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
                 self._data_event_handler.start()
                 self._allow_messages.wait()
-                self._channel.basic_publish(
-                    exchange=exchange,
-                    routing_key=routing_key,
-                    body=content.encode("utf-8"),
-                    properties=pika.BasicProperties(
-                        reply_to=self._response_queue_name,
-                        correlation_id=message_id,
-                        content_encoding="utf-8",
-                        delivery_mode=pika.delivery_mode.DeliveryMode.Persistent.value,
-                    ),
-                )
             except Exception as e:
                 self._logger.exception("Unable to reconnect to the message broker", exc_info=e)
                 return None
+            self.__messaging_lock.acquire()
+            self._channel.basic_publish(
+                exchange=exchange,
+                routing_key=routing_key,
+                body=content.encode("utf-8"),
+                properties=pika.BasicProperties(
+                    reply_to=self._response_queue_name,
+                    correlation_id=message_id,
+                    content_encoding="utf-8",
+                    delivery_mode=pika.delivery_mode.DeliveryMode.Persistent.value,
+                ),
+            )
         self.__messaging_lock.release()
         self._logger.debug("Published a new message in the specified exchange")
         self._logger.debug("Released messaging lock from sending a message")
