@@ -232,6 +232,7 @@ class Client:
             self.__messaging_lock.release()
             # Stop the consumer thread which tries to consume the answers
             self._stop_event.set()
+            self._data_event_handler.join()
             self.__messaging_lock.acquire()
             # Close the channel to the message broker
             if self._channel.is_open:
