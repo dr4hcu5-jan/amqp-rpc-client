@@ -98,7 +98,6 @@ class Client:
         while not self._stop_event.is_set():
             # Acquire the internal lock and process possible new data events on the connection
             with self.__messaging_lock:
-                self._logger.debug("Acquired the messaging lock for processing data events")
                 if self._connection.is_open:
                     self._connection.process_data_events()
                 else:
@@ -112,7 +111,6 @@ class Client:
                         self._connection.process_data_events()
                         self._allow_messages.set()
             # Sleep for 0.01 seconds before rechecking the stop flag
-            self._logger.debug("Released the messaging lock from processing data events")
             time.sleep(self._data_event_wait_time)
 
         # Since the stop flag was set we will now cancel the consuming process
@@ -121,13 +119,13 @@ class Client:
         # Now acquire the messaging lock to stop messages from being sent
         with self.__messaging_lock:
             # Close the queue used for responses
-            self._logger.debug("Closing the response queue")
+            self._logger.info("Closing the response queue")
             self._channel.queue_delete(self._response_queue_name)
             # Close the channel to the message broker
-            self._logger.debug("Closing the channel open to the message broker")
+            self._logger.info("Closing the channel open to the message broker")
             self._channel.close()
             # Close the connection to the message broker
-            self._logger.debug("Closing the connection open to the message broker")
+            self._logger.info("Closing the connection open to the message broker")
             self._connection.close()
         self._logger.info("Closed the connection to the message broker gracefully")
 
