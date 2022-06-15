@@ -297,6 +297,10 @@ class Client:
             auto_ack=False,
             exclusive=True,
         )
+        self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+        self._logger.debug("Starting the data handling thread")
+        self._data_event_handler.start()
+        self._allow_messages.wait()
 
     def stop(self):
         """
