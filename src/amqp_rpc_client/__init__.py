@@ -78,10 +78,7 @@ class Client:
         try:
             self._channel.start_consuming()
         except pika.exceptions.ConnectionClosed:
-            self._logger.warning(
-                "The connection between the client and message broker has been closed. Sending new "
-                "messages may take a while since the client will need to reconnect"
-            )
+            self._logger.warning("The connection between the client and message broker has been closed")
 
     def _handle_new_message(
         self,
@@ -149,6 +146,12 @@ class Client:
                     "to the message broker"
                 )
                 self._connect()
+            if not self._allow_messages.wait(timeout=10.0):
+                self._logger.error(
+                    "ERR_NO_MESSAGES_ALLOWED - Unable to send messages since the initial connection flow has not "
+                    "finished "
+                )
+                return None
             try:
                 self._channel.basic_publish(
                     exchange=exchange,
