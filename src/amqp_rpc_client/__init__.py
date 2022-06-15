@@ -43,6 +43,9 @@ class Client:
         :type additional_properties: dict[str, str], optional
         """
         # Get a logger for this client
+        self._allow_messages = threading.Event()
+        self._stop_event = threading.Event()
+        self._data_event_wait_time = data_processing_wait_time
         if additional_properties is None:
             self._additional_properties = {}
         else:
@@ -65,61 +68,20 @@ class Client:
             self._logger.debug("Muting the underlying pika library completely")
             logging.getLogger("pika").setLevel("CRITICAL")
         self._connect()
-        # Create an event for stopping the broker
-        self._stop_event = threading.Event()
-        # Create an event for allowing messages to be sent after creating the connection
-        self._allow_messages = threading.Event()
-        # Create a thread which will handle the data events sent by the broker
-        self._logger.debug("Setting up the data handling")
-        self._data_event_wait_time = data_processing_wait_time
-        self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
-        # Start the thread
-        self._logger.debug("Starting the data handling thread")
-        self._data_event_handler.start()
-        self._allow_messages.wait()
         self._logger.info("Startup process finished. The client may now be used to send messages")
 
     def _handle_data_events(self):
         """Handle new data events and cancel the communication with the message broker if the
         event was set"""
         # Process some data events from the start on and allow messages to be sent
-        if self._connection.is_open:
-            self._connection.process_data_events()
-            self._allow_messages.set()
-        # Start polling for new messages indefinitely
-        while not self._stop_event.is_set():
-            # Acquire the internal lock and process possible new data events on the connection
-            with self.__messaging_lock:
-                if self._connection.is_open:
-                    self._connection.process_data_events()
-                else:
-                    self._allow_messages.clear()
-                    self._logger.error(
-                        "The connection to the message broker is closed. Reconnecting to the message broker"
-                    )
-                    # Since the connection was closed the channel and queues have been closed too
-                    self._connect()
-                    if self._connection.is_open:
-                        self._connection.process_data_events()
-                        self._allow_messages.set()
-            # Sleep for 0.01 seconds before rechecking the stop flag
-            time.sleep(self._data_event_wait_time)
-
-        # Since the stop flag was set we will now cancel the consuming process
-        self._logger.info("The stopping event was enabled. Cancelling the message consumer")
-        self._channel.basic_cancel(self._consumer)
-        # Now acquire the messaging lock to stop messages from being sent
-        with self.__messaging_lock:
-            # Close the queue used for responses
-            self._logger.info("Closing the response queue")
-            self._channel.queue_delete(self._response_queue_name)
-            # Close the channel to the message broker
-            self._logger.info("Closing the channel open to the message broker")
-            self._channel.close()
-            # Close the connection to the message broker
-            self._logger.info("Closing the connection open to the message broker")
-            self._connection.close()
-        self._logger.info("Closed the connection to the message broker gracefully")
+        self._allow_messages.set()
+        try:
+            self._channel.start_consuming()
+        except pika.exceptions.ConnectionClosed:
+            self._logger.warning(
+                "The connection between the client and message broker has been closed. Sending new "
+                "messages may take a while since the client will need to reconnect"
+            )
 
     def _handle_new_message(
         self,
@@ -187,12 +149,6 @@ class Client:
                     "to the message broker"
                 )
                 self._connect()
-            if not self._allow_messages.wait(timeout=10.0):
-                self._logger.error(
-                    "ERR_NO_MESSAGES_ALLOWED - Unable to send messages since the initial connection flow has not "
-                    "finished "
-                )
-                return None
             try:
                 self._channel.basic_publish(
                     exchange=exchange,
@@ -298,13 +254,16 @@ class Client:
             exclusive=True,
         )
         self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+        self._stop_handler_watching = threading.Event()
         self._logger.debug("Starting the data handling thread")
         self._data_event_handler.start()
-        self._allow_messages.wait()
+
+    def _reconnect(self):
+        self._connect()
 
     def stop(self):
         """
         Stop the client and close all connections to the message broker
         """
         # Set the stop event since the thread will handle the disconnection flow
-        self._stop_event.set()
+        self._channel.stop_consuming(self._consumer)
