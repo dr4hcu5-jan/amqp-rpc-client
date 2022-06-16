@@ -3,7 +3,7 @@ import logging
 import secrets
 import sys
 import threading
-import time
+import _thread
 import typing
 
 import pika
@@ -43,6 +43,7 @@ class Client:
         :type additional_properties: dict[str, str], optional
         """
         # Get a logger for this client
+        self._data_event_handler = None
         self._allow_messages = threading.Event()
         self._stop_event = threading.Event()
         self._data_event_wait_time = data_processing_wait_time
@@ -79,6 +80,8 @@ class Client:
             self._channel.start_consuming()
         except pika.exceptions.ConnectionClosed:
             self._logger.warning("The connection between the client and message broker has been closed")
+            self._allow_messages.clear()
+            _thread.exit()
 
     def _handle_new_message(
         self,
@@ -256,13 +259,12 @@ class Client:
             auto_ack=False,
             exclusive=True,
         )
-        self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
-        self._stop_handler_watching = threading.Event()
+        if self._data_event_handler is None:
+            self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+        else:
+            self._data_event_handler.join()
         self._logger.debug("Starting the data handling thread")
         self._data_event_handler.start()
-
-    def _reconnect(self):
-        self._connect()
 
     def stop(self):
         """
