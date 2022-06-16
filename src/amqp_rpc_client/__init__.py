@@ -5,6 +5,7 @@ import secrets
 import sys
 import threading
 import _thread
+import time
 import typing
 
 import pika
@@ -76,13 +77,12 @@ class Client:
         """Handle new data events and cancel the communication with the message broker if the
         event was set"""
         # Process some data events from the start on and allow messages to be sent
-        self._allow_messages.set()
-        try:
-            self._channel.start_consuming()
-        except pika.exceptions.ConnectionClosed:
-            self._logger.warning("The connection between the client and message broker has been closed")
-            self._allow_messages.clear()
-            _thread.exit()
+        while not self._stop_event.is_set():
+            self._connection.process_data_events(time_limit=0)
+            self._allow_messages.set()
+            time.sleep(self._data_event_wait_time)
+        self._allow_messages.clear()
+        _thread.exit()
 
     def _got_new_message(
         self,
