@@ -71,7 +71,6 @@ class Client:
             self._logger.debug("Muting the underlying pika library completely")
             logging.getLogger("pika").setLevel("CRITICAL")
         self._connect()
-        self._logger.info("Startup process finished. The client may now be used to send messages")
 
     def _handle_data_events(self):
         """Handle new data events and cancel the communication with the message broker if the
@@ -292,6 +291,7 @@ class Client:
             self._data_event_handler.start()
         self._logger.debug("Starting the data handling thread")
         self._allow_messages.wait()
+        self._logger.info("Startup process finished. The client may now be used to send messages")
 
     def stop(self):
         """
