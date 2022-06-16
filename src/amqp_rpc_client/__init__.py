@@ -280,12 +280,15 @@ class Client:
             exclusive=True,
         )
         if self._data_event_handler is None:
-            self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+            self._data_event_handler = threading.Thread(
+                target=self._handle_data_events, daemon=True, name=f"EVENT_HANDLER_{secrets.token_hex(nbytes=8)}"
+            )
             self._data_event_handler.start()
         else:
             self._data_event_handler.join()
-            del self._data_event_handler
-            self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+            self._data_event_handler = threading.Thread(
+                target=self._handle_data_events, daemon=True, name=f"EVENT_HANDLER_{secrets.token_hex(nbytes=8)}"
+            )
             self._data_event_handler.start()
         self._logger.debug("Starting the data handling thread")
         self._allow_messages.wait()
