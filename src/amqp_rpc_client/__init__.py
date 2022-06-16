@@ -91,8 +91,6 @@ class Client:
             self._allow_messages.set()
             time.sleep(self._data_event_wait_time)
         self._allow_messages.clear()
-        self._channel.basic_cancel(self._consumer)
-        _thread.exit()
 
     def _got_new_message(
         self,
