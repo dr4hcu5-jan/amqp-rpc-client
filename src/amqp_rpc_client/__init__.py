@@ -277,6 +277,7 @@ class Client:
             self._data_event_handler.join()
         self._logger.debug("Starting the data handling thread")
         self._data_event_handler.start()
+        self._allow_messages.wait()
 
     def stop(self):
         """
