@@ -1,4 +1,5 @@
 """An asynchronous RabbitMQ client usable for RPC calls"""
+import functools
 import logging
 import secrets
 import sys
@@ -82,6 +83,17 @@ class Client:
             self._logger.warning("The connection between the client and message broker has been closed")
             self._allow_messages.clear()
             _thread.exit()
+
+    def _got_new_message(
+        self,
+        channel: BlockingChannel,
+        method: Basic.Deliver,
+        properties: BasicProperties,
+        content: bytes,
+    ):
+        self._connection.add_callback_threadsafe(
+            functools.partial(self._handle_new_message, channel, method, properties, content)
+        )
 
     def _handle_new_message(
         self,
