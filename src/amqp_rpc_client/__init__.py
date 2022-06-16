@@ -278,6 +278,7 @@ class Client:
             auto_ack=False,
             exclusive=True,
         )
+        self._stop_event.clear()
         if self._data_event_handler is None:
             self._data_event_handler = threading.Thread(
                 target=self._handle_data_events, daemon=True, name=f"EVENT_HANDLER_{secrets.token_hex(nbytes=8)}"
