@@ -273,11 +273,13 @@ class Client:
         )
         if self._data_event_handler is None:
             self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+            self._data_event_handler.start()
         else:
             self._data_event_handler.join()
+            del self._data_event_handler
             self._data_event_handler = threading.Thread(target=self._handle_data_events, daemon=True)
+            self._data_event_handler.start()
         self._logger.debug("Starting the data handling thread")
-        self._data_event_handler.start()
         self._allow_messages.wait()
 
     def stop(self):
