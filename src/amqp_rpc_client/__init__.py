@@ -297,4 +297,6 @@ class Client:
         """
         # Set the stop event since the thread will handle the disconnection flow
         self._channel.stop_consuming(self._consumer)
+        self._stop_event.set()
+        self._data_event_handler.join()
         self._connection.close()
