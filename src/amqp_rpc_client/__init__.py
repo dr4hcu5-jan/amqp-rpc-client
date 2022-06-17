@@ -81,7 +81,7 @@ class Client:
         while not self._stop_event.is_set():
             try:
                 self._connection.process_data_events(time_limit=0)
-                time.sleep(self._data_event_wait_time)
+                self._connection.sleep(self._data_event_wait_time)
             except pika.exceptions.ConnectionClosedByClient:
                 self._logger.info("The client has closed the connection to the message broker")
                 self._allow_messages.clear()
