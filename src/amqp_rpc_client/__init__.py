@@ -79,17 +79,18 @@ class Client:
         self._connection.process_data_events(time_limit=0)
         self._allow_messages.set()
         while not self._stop_event.is_set():
-            try:
-                self._connection.process_data_events(time_limit=0)
-                self._connection.sleep(self._data_event_wait_time)
-            except pika.exceptions.ConnectionClosedByClient:
-                self._logger.info("The client has closed the connection to the message broker")
-                self._allow_messages.clear()
-                self._stop_event.set()
-            except pika.exceptions.ConnectionClosedByBroker as e:
-                self._logger.warning(f"The message broker has closed the connection to the client: {e.reply_text}")
-                self._allow_messages.clear()
-                self._stop_event.set()
+            with self.__messaging_lock:
+                try:
+                    self._connection.process_data_events(time_limit=0)
+                    self._connection.sleep(self._data_event_wait_time)
+                except pika.exceptions.ConnectionClosedByClient:
+                    self._logger.info("The client has closed the connection to the message broker")
+                    self._allow_messages.clear()
+                    self._stop_event.set()
+                except pika.exceptions.ConnectionClosedByBroker as e:
+                    self._logger.warning(f"The message broker has closed the connection to the client: {e.reply_text}")
+                    self._allow_messages.clear()
+                    self._stop_event.set()
         self._allow_messages.clear()
 
     def _got_new_message(
