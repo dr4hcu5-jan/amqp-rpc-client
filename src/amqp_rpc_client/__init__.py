@@ -76,9 +76,12 @@ class Client:
         """Handle new data events and cancel the communication with the message broker if the
         event was set"""
         # Process some data events from the start on and allow messages to be sent
+        self._connection.process_data_events(time_limit=0)
+        self._allow_messages.set()
         while not self._stop_event.is_set():
             try:
                 self._connection.process_data_events(time_limit=0)
+                time.sleep(self._data_event_wait_time)
             except pika.exceptions.ConnectionClosedByClient:
                 self._logger.info("The client has closed the connection to the message broker")
                 self._allow_messages.clear()
@@ -87,8 +90,6 @@ class Client:
                 self._logger.warning(f"The message broker has closed the connection to the client: {e.reply_text}")
                 self._allow_messages.clear()
                 self._stop_event.set()
-            self._allow_messages.set()
-            time.sleep(self._data_event_wait_time)
         self._allow_messages.clear()
 
     def _got_new_message(
