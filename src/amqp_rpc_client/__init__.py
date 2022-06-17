@@ -125,7 +125,7 @@ class Client:
                 "The received message did not contain a correlation id. This "
                 "message is therefore not accepted and will be rejected"
             )
-            channel.basic_reject(method.delivery_tag, requeue=False)
+            self._channel.basic_reject(method.delivery_tag, requeue=False)
         else:
             self._logger.debug("Saving the response body to the message list")
             self.__responses.update({properties.correlation_id: content})
@@ -134,10 +134,10 @@ class Client:
                 self._logger.critical(
                     "Error in the messaging events. Unable to find event associated with this correlation id"
                 )
-                channel.basic_reject(method.delivery_tag, requeue=True)
+                self._channel.basic_reject(method.delivery_tag, requeue=True)
             else:
                 self.__events.get(properties.correlation_id).set()
-                channel.basic_ack(method.delivery_tag)
+                self._channel.basic_ack(method.delivery_tag)
 
     def send(self, content: str, exchange: str, routing_key: str = "") -> typing.Union[str, None]:
         """Send a message to the exchange and get the created message id
