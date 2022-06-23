@@ -82,7 +82,6 @@ class Client:
             with self.__messaging_lock:
                 try:
                     self._connection.process_data_events(time_limit=0)
-                    self._connection.sleep(self._data_event_wait_time)
                 except pika.exceptions.ConnectionClosedByClient:
                     self._logger.info("The client has closed the connection to the message broker")
                     self._allow_messages.clear()
@@ -91,6 +90,8 @@ class Client:
                     self._logger.warning(f"The message broker has closed the connection to the client: {e.reply_text}")
                     self._allow_messages.clear()
                     self._stop_event.set()
+                finally:
+                    self._connection.sleep(self._data_event_wait_time)
         self._allow_messages.clear()
 
     def _got_new_message(
@@ -149,56 +150,58 @@ class Client:
         :return: The message id created to identify the request
         """
         # Acquire the messaging lock for the whole operation
-        with self.__messaging_lock:
-            if not self._connection.is_open:
-                # Since the connection was not opened connect again
-                self._logger.warning(
-                    "WARN_NO_BROKER_CONNECTION - The client was not connected to the message broker. Trying to connect "
-                    "to the message broker"
-                )
-                self._connect()
-            # Since sending messages is allowed start by creating a new message id
-            message_id = secrets.token_urlsafe(nbytes=32)
-            self._logger.debug("Created new message id: %s", message_id)
-            # Create a new event signalizing if the message has been received
-            self.__events.update({message_id: threading.Event()})
-            self._logger.debug("Created new event for the message to be sent")
-            # Now check if the channel used to send the message is still open
-            if not self._channel.is_open:
-                self._logger.warning(
-                    "WARN_NO_OPEN_CHANNEL - The channel to the message broker is not open. Trying to reconnect "
-                    "to the message broker"
-                )
-                self._connect()
-            if not self._allow_messages.wait(timeout=10.0):
-                self._logger.error(
-                    "ERR_NO_MESSAGES_ALLOWED - Unable to send messages since the initial connection flow has not "
-                    "finished "
-                )
-                return None
-            try:
-                self._channel.basic_publish(
-                    exchange=exchange,
-                    routing_key=routing_key,
-                    body=content.encode("utf-8"),
-                    properties=pika.BasicProperties(
-                        reply_to=self._response_queue_name, correlation_id=message_id, content_encoding="utf-8"
-                    ),
-                )
-                self._logger.debug(
-                    "Published the message with the following properties:\nExchange: %s\nRouting "
-                    "Key: %s\nCorrelation ID:%s\nBody:%s\n",
-                    exchange,
-                    routing_key,
-                    message_id,
-                    content,
-                )
-            except Exception as e:
-                self._logger.exception(
-                    "PUBLISH_ERROR - An exception was thrown during the sending of the message", exc_info=e
-                )
-                raise e
-            return message_id
+        self.__messaging_lock.acquire()
+        if not self._connection.is_open:
+            # Since the connection was not opened connect again
+            self._logger.warning(
+                "WARN_NO_BROKER_CONNECTION - The client was not connected to the message broker. Trying to connect "
+                "to the message broker"
+            )
+            self._connect()
+        # Since sending messages is allowed start by creating a new message id
+        message_id = secrets.token_urlsafe(nbytes=32)
+        self._logger.debug("Created new message id: %s", message_id)
+        # Create a new event signalizing if the message has been received
+        self.__events.update({message_id: threading.Event()})
+        self._logger.debug("Created new event for the message to be sent")
+        # Now check if the channel used to send the message is still open
+        if not self._channel.is_open:
+            self._logger.warning(
+                "WARN_NO_OPEN_CHANNEL - The channel to the message broker is not open. Trying to reconnect "
+                "to the message broker"
+            )
+            self._connect()
+        if not self._allow_messages.wait(timeout=10.0):
+            self._logger.error(
+                "ERR_NO_MESSAGES_ALLOWED - Unable to send messages since the initial connection flow has not "
+                "finished "
+            )
+            return None
+        try:
+            self._channel.basic_publish(
+                exchange=exchange,
+                routing_key=routing_key,
+                body=content.encode("utf-8"),
+                properties=pika.BasicProperties(
+                    reply_to=self._response_queue_name, correlation_id=message_id, content_encoding="utf-8"
+                ),
+            )
+            self._logger.debug(
+                "Published the message with the following properties:\nExchange: %s\nRouting "
+                "Key: %s\nCorrelation ID:%s\nBody:%s\n",
+                exchange,
+                routing_key,
+                message_id,
+                content,
+            )
+        except Exception as e:
+            self._logger.exception(
+                "PUBLISH_ERROR - An exception was thrown during the sending of the message", exc_info=e
+            )
+            self.__messaging_lock.release()
+            raise e
+        self.__messaging_lock.release()
+        return message_id
 
     def get_response(self, message_id: str) -> typing.Optional[bytes]:
         """Get a response from the response list
